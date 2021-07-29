@@ -8,7 +8,7 @@ k.fold.cv <- function(X = x, Y = y, method, k = 10, seed = my.seed){
   D <- D[sample(nrow(D)),] #shuffle the dataset - because some consecutive students may come from the same schools and we are not considering the multilevel structure right now
   folds <- split(D, f = as.factor(1:k)) #generate folds
   pb <- txtProgressBar(min = 0, max = k, style = 3) #progress bar
-  result <- matrix(nrow = k, ncol = 11) #ncol=11 because I have 11 measures
+  result <- matrix(nrow = k, ncol = 2) #ncol=11 because I have 11 measures
   predicted.cov <- vector()
   cf_results <- data.frame(matrix(nrow = ncol(D), ncol = k))
   if (is.null(method)) {stop("Select one of the available methods: flr, BLR, BMA, fma, ssvs, lasso, ridge, elastic.net, rf")}
@@ -164,21 +164,14 @@ k.fold.cv <- function(X = x, Y = y, method, k = 10, seed = my.seed){
       train <- bind_rows(folds[-i]) #bind_row is a dplyr function to bind list into dataframe
       y.train <- train[,"Y"]
       x.train <- train[,colnames(X)]
-      cf <- my.blr(y.train = y.train, x.train = x.train)
-      y.tilda <- my.predict(coef = cf, x.data = x.test)
-      y.train.tilda <- my.predict(coef = cf, x.data = x.train) #y.train.tilda is the predicted scores of the training data set
-      result[i,] <- c(PL(ytest = y.test, ytrain.tilda = y.train.tilda), 
-                      pred.cov(xtest = x.test, ytest = y.test, xtrain = x.train, ytrain = y.train, ytrain.tilda = y.train.tilda, ytilda = y.tilda),
-                      bias(y.test, y.tilda),
-                      mae(y.test, y.tilda),
-                      per.bias(y.test, y.tilda),
-                      mape(y.test, y.tilda),
-                      mse(y.test, y.tilda),
-                      rmse(y.test, y.tilda),
-                      rmspe(y.test, y.tilda),
-                      KLD(y.test, y.tilda)$sum.KLD.py.px,
-                      TL())
-      cf_results[,i] <- cf
+      blr_res <- my.blr(y.train = y.train, x.train = x.train, x.test = x.test, prior_beta = prior_beta)
+      y.tilda <- blr_res$y_pred
+      p.a <- density(y.test, 'SJ', from = min(c(y.tilda, y.test)), to = max(c(y.tilda, y.test)))$y
+      p.s <- density(y.tilda, 'SJ', from = min(c(y.tilda, y.test)), to = max(c(y.tilda, y.test)))$y
+      result[i,] <- c(rmse(y.test, y.tilda),
+                      KLD(p.s, p.a)$sum.KLD.py.px
+                      )
+      cf_results[,i] <- blr_res$beta
       setTxtProgressBar(pb, i)
     }
   }

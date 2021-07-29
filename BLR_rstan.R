@@ -1,27 +1,11 @@
 #Author: Sinan Yavuz
 #Date: July 28, 2021
-#Some predictors have a prior but some does not. We will use informative for what we have on 2018 PISA data.
-rm(list = ls())
-setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
-library(dplyr)
-library(rstan)
-library(rstanarm)
-library(loo)
-options(mc.cores = 4)
-#priors
-prior_beta <- readRDS("priors.RDS")
-#data
-pisa.imp <- readRDS("pisa2018.RDS")
-
-y <- pisa.imp$PV1READ
-x <- pisa.imp[,-grep("PV1READ", colnames(pisa.imp))]
-
-prior_names <- rownames(prior_beta)
 
 #now the data generation function requires the test set
 data.stan <- function(y.train, x.train, x.test, prior_beta) {
   x <- cbind(Intercept = 1, x.train) #get x: intercept and all predictors, -1 stands for the dependent variable. this need to be changed if the 
   y <- y.train
+  prior_names <- rownames(prior_beta)
   x_nr <- cbind(x[,prior_names], x[,-which(names(x) %in% prior_names)]) #x new rank
   N <- nrow(x)
   M <- ncol(x)
@@ -53,7 +37,7 @@ transformed data {
 parameters {
   vector[M] beta;                 // M number of beta_std values, priors for beta - standardized prior
   real<lower = 0> sigma_y;        // sigma lowest value is 0, priros for the sd of the prior
-  vector[N] y_new;                // predictions
+  vector[N_new] y_new;            // predictions
 }
 model {
   for (i in 2:np) {
@@ -76,10 +60,10 @@ est <- summary(fit)$summary
 beta <- est[grep('^beta\\[', rownames(est)), ][1:data$M,c("mean","sd")]
 rownames(beta) <- colnames(data$x)
 beta <- beta[c("Intercept",colnames(x)),]
-y_pred <- est[grep('^y_new\\[', rownames(est)), ][1:nrow(x), "mean"]
+y_pred <- est[grep('^y_new\\[', rownames(est)), ][1:nrow(data$x_new), "mean"]
 return(list(beta = beta, y_pred = y_pred))
 }
 
-saveRDS(list(beta=beta, y_pred = y_pred),"beta_2018_blr.RDS")
+#saveRDS(list(beta=beta, y_pred = y_pred),"beta_2018_blr.RDS")
 #readRDS("beta_2018_blr.RDS")
 

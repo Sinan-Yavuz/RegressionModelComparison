@@ -26,18 +26,20 @@ set.seed(my.seed)
 #-------------------------#
 
 #------- data file -------#
-#setwd(dirname(rstudioapi::getActiveDocumentContext()$path)) #remove this code before chtc - this sets your script location - Don't change!
-#pisa.imp <- read.csv("pisa.2018.usa.imp.reg.csv") #imputed (by miBMA) 2018 PISA file with determined predictors
 pisa.imp <- readRDS("pisa2018.RDS")
 #summary(pisa.imp)
 #summary(pisa2)
 pisa.imp <- sample_n(pisa.imp, N) #dplyr function, row sample
 y <- pisa.imp[,1] #dependent variable
 x <- pisa.imp[,-1] #set of predictors
+#priors
+prior_beta <- readRDS("priors.RDS")
 #-------------------------#
 
 
+ 
 debug(k.fold.cv)
+undebug(my.blr)
 results.flr <- k.fold.cv(method = "flr")
 results.blr <- k.fold.cv(method = "BLR")
 results.bma <- k.fold.cv(method = "BMA")
