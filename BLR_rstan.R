@@ -41,7 +41,7 @@ parameters {
 }
 model {
   for (i in 2:np) {
-  beta[i] ~ normal(prior_beta_mean[i], prior_beta_sd[i]);
+  beta[i] ~ normal(prior_beta_mean[i], prior_beta_sd[i]^2);
   }
   for (i in (np+1):M) {
   beta[i] ~ normal(0, 25);  //noninformative part
@@ -57,9 +57,9 @@ writeLines(modelstring, con = 'modelBLR.stan')
 data <- data.stan(y.train, x.train, x.test, prior_beta)
 fit <- stan('modelBLR.stan', data = data, iter = n_iter, chains = n.chains)
 est <- summary(fit)$summary
-beta <- est[grep('^beta\\[', rownames(est)), ][1:data$M,c("mean","sd")]
-rownames(beta) <- colnames(data$x)
-beta <- beta[c("Intercept",colnames(x)),]
+beta <- est[grep('^beta\\[', rownames(est)), ][1:data$M,c("mean")]
+names(beta) <- colnames(data$x)
+beta <- beta[c("Intercept", colnames(x.train))]
 y_pred <- est[grep('^y_new\\[', rownames(est)), ][1:nrow(data$x_new), "mean"]
 return(list(beta = beta, y_pred = y_pred))
 }

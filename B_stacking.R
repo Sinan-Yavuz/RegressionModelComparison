@@ -10,15 +10,10 @@ B_stacking <- function(data, test){
   loo_list <- lapply(fits, loo)
   wtsStacking <- loo_model_weights(loo_list, method = "stacking")
   n_draws <- nrow(as.matrix(fits[[1]])) 
-  ypredStacking <- matrix(NA, nrow = n_draws, ncol = nobs(fits[[1]]))
-  for (d in 1:n_draws) {
-    k <- sample(1:length(wtsStacking), size = 1, prob = wtsStacking)
-    ypredStacking[d, ] <- posterior_predict(fits[[k]], draws = 1)
-  }
   y_test_predStacking <- matrix(NA, nrow = n_draws, ncol = nrow(test))
   for (d in 1:n_draws) {
     k <- sample(1:length(wtsStacking), size = 1, prob = wtsStacking)
     y_test_predStacking[d, ] <- posterior_predict(fits[[k]], newdata = test, draws = 1)
   }
-  return(list(y.tilda = colMeans(y_test_predStacking), y.train.tilda = colMeans(ypredStacking)))
+  return(list(y.tilda = colMeans(y_test_predStacking)))
 }

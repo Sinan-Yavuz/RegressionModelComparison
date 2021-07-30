@@ -36,9 +36,7 @@ x <- pisa.imp[,-1] #set of predictors
 prior_beta <- readRDS("priors.RDS")
 #-------------------------#
 
-
- 
-debug(k.fold.cv)
+undebug(k.fold.cv)
 undebug(my.blr)
 results.flr <- k.fold.cv(method = "flr")
 results.blr <- k.fold.cv(method = "BLR")

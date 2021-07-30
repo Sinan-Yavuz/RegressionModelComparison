@@ -21,7 +21,7 @@ parameters {
 }
 model {
   for (i in 2:np) {
-  beta[i] ~ normal(prior_beta_mean[i], prior_beta_sd[i]);
+  beta[i] ~ normal(prior_beta_mean[i], prior_beta_sd[i]*10);
   }
   for (i in (np+1):M) {
   beta[i] ~ normal(0, 25);  //noninformative part
