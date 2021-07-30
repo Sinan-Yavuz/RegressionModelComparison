@@ -1,23 +1,20 @@
 #Run script
 #Date: June 22 2020
 #Author: Sinan Yavuz
-setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
-rm(list = ls())
+#setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
+#rm(list = ls())
 source("Packages.R")
 source("BLR_rstan.R")
 source("k_fold_cv.R")
 source("Measures.R")
-source("PL_TL.R")
 source("Pred_cov.R")
 source("B_stacking.R")
-m=k=1
 
-k <- as.integer(commandArgs(T)[[1]])
+rep <- as.integer(commandArgs(T)[[1]])
 m <- as.integer(commandArgs(T)[[2]])
 
 N <- c(200,1000)[m]
 
-rep = k
 ##################### CHTC - Ends ############################# - DON'T RUN ENDS
 set.seed(40495068)
 seed.number <- round(runif(1000,10000000, 99999999),0)
@@ -36,8 +33,6 @@ x <- pisa.imp[,-1] #set of predictors
 prior_beta <- readRDS("priors.RDS")
 #-------------------------#
 
-undebug(k.fold.cv)
-undebug(my.blr)
 results.flr <- k.fold.cv(method = "flr")
 results.blr <- k.fold.cv(method = "BLR")
 results.bma <- k.fold.cv(method = "BMA")
@@ -46,19 +41,30 @@ results.lasso <- k.fold.cv(method = "lasso")
 results.ridge <- k.fold.cv(method = "ridge")
 results.elastic.net <- k.fold.cv(method = "elastic.net")
 
-results.rf <- k.fold.cv(method = "rf")
+results.rf <- k.fold.cv(method = "rf") #no coefficient
 results.ssvs <- k.fold.cv(method = "ssvs")
-results.stacking <- k.fold.cv(method = "stacking")
+results.stacking <- k.fold.cv(method = "stacking") #no coefficient
 
-results <- as.vector(c(cbind(results.flr,
-                               results.blr2,
-                               results.bma[c(1:11,14),],
-                               results.stacking,
-                               results.lasso,
-                               results.ridge,
-                               results.elastic.net,
-                               results.rf,
-                               results.ssvs), results.bma[12:13,]))
+results <- as.vector(c(cbind(results.flr[[1]],
+                             results.blr[[1]],
+                             results.bma[[1]][c(1:2),],
+                             results.stacking[[1]],
+                             results.lasso[[1]],
+                             results.ridge[[1]],
+                             results.elastic.net[[1]],
+                             results.rf[[1]],
+                             results.ssvs[[1]]), results.bma[[1]][3:4,]))
 
-write.table(t(c(rep,results)), paste0("results.N",N,"_",rep,".csv"), row.names = FALSE, col.names = FALSE)
+results2 <- as.vector(c(cbind(results.flr[[2]],
+                             results.blr[[2]],
+                             results.bma[[2]],
+                             results.lasso[[2]],
+                             results.ridge[[2]],
+                             results.elastic.net[[2]],
+                             results.ssvs[[2]])))
+
+results3 <-c(results, results2) 
+
+write.table(t(c(rep,results3)), paste0("results.N",N,"_",rep,".csv"), row.names = FALSE, col.names = FALSE)
+
 
